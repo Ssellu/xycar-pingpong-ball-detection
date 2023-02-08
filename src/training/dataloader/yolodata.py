@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
 
+import cv2
+import time
 
 class Yolodata(Dataset):
     file_dir = ""
@@ -85,6 +87,12 @@ class Yolodata(Dataset):
 
             #data augmentation
             img, bbox = self.transform((img, bbox))
+
+
+            # !!!
+            print(f'bbox : {bbox}')
+            cv2.imwrite(f'color_img_{time.thread_time_ns}.jpg', img)
+
 
             if bbox.shape[0] != 0:
                 batch_idx = torch.zeros(bbox.shape[0])
