@@ -579,29 +579,30 @@ def get_lr(optimizer):
 
 
 def aug_dataset(cfg_param):
+    width = 640
+    height = 480
+    lst = [Yolodata(is_train=True, transform=transform, cfg_param=cfg_param)
+            for transform in
+                    [get_transformations(cfg_param=cfg_param, is_train=True)]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.Add, value=value) for value in [25, 45, -25, 45]]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.AdditiveGaussianNoise, scale=scale*255) for scale in [0.03, 0.05, 0.10, 0.20]]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.SaltAndPepper, p=p) for p in [0.01, 0.02, 0.03]]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.Cartoon)]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.GaussianBlur, sigma=sigma) for sigma in [0.25, 0.5, 1.0]]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.MotionBlur, seed=seed) for seed in [0, 72, 144, 216, 288]]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.ChangeColorTemperature, kelvin=kelvin) for kelvin in [8000, 16000]]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.RemoveSaturation, mul=mul) for mul in [0.25]]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.GammaContrast, gamma=gamma) for gamma in [0.50, 0.81, 1.12, 1.44]]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.SigmoidContrast, gain=gain) for gain in [5.1, 17.1, 14.4]]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.HistogramEqualization, to_colorspace=to_colorspace) for to_colorspace in [iaa.HistogramEqualization.HSV,iaa.HistogramEqualization.HLS,iaa.HistogramEqualization.Lab]]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.Sharpen, alpha=alpha, lightness=lightness) for alpha,lightness in zip([1, 1, 1, 1], [1.5, 1.2, 0.5, 0.8])]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.Sharpen, alpha=alpha, strength=strength) for alpha,strength in zip([1, 1, 1], [0.2, 0.3, 0.4])]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.CropAndPad, px=px) for px in [(-2,0,0,0), (0,2,0,-2), (2,0,0,0), (0,-2,0,2)]]
+                    + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.CropToFixedSize, height=height-32,width=width-32, position=position) for position in ['normal', 'right_top', 'right_bottom', 'left_top', 'left_bottom', 'center_top', 'center_bottom']
+                    ]
+            ]
 
-    my_transform = [
-        get_transformations(cfg_param=cfg_param, is_train=True),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.Add, value=25),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.Add, value=45),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.Add, value=-25),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.Add, value=-45),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.AdditiveGaussianNoise, scale=0.03*255),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.AdditiveGaussianNoise, scale=0.05*255),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.AdditiveGaussianNoise, scale=0.10*255),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.AdditiveGaussianNoise, scale=0.20*255),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.SaltAndPepper, p=0.01),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.SaltAndPepper, p=0.02),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.SaltAndPepper, p=0.03),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.Cartoon),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.GaussianBlur, sigma=0.25),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.GaussianBlur, sigma=0.50),
-        get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.GaussianBlur, sigma=1.00),
-    ]
-    lst = [Yolodata(is_train=True,
-                    transform=my_transform[n],
-                    cfg_param=cfg_param) for n in range(len(my_transform))]
-
+    # Sum of YoloData1, YoloData2, YoloData3, ...
     s = lst[0]
     for e in lst[1:]: s += e
 
