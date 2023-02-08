@@ -21,7 +21,8 @@
 
 ## Project Pipeline
 
-![image-20230208141515128](C:\Users\Sera\AppData\Roaming\Typora\typora-user-images\image-20230208141515128.png)
+![image-20230208141515128](https://user-images.githubusercontent.com/33347724/217444724-ec3a9bb0-8d37-4be0-9258-d70c09e45dc6.png)
+
 
 1. 카메라로부터 이미지를 입력 받는다.
    - OpenCV
