@@ -243,4 +243,5 @@ CATKIN_IGNORE
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,ros
 
 ### Private ###
-/images/*
+src/training/datasets/Annotations/*.txt
+src/training/datasets/ImageSets/*
