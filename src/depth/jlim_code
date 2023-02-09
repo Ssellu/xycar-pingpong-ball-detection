@@ -1,16 +1,15 @@
-# -*- coding: utf-8 -*-
-
+import json
 import cv2
 from cv2 import undistort
 import matplotlib.pyplot as plt
 import os
 import numpy as np
 import time
-
+import random
 #이미지 따로 읽고
 # txt파일을 dict에 저장하기 ( labeling 정보 )
 
-
+obj_puttext_loc = [[-15,-15],[15,-15],[-15,15],[15,15]]  # obj가 겹쳐질 경우 거리 text도 겹쳐짐, 이를 분리하기 위함.
 
 
 #image_file_path = os.path.join(r", "123.png")
@@ -194,18 +193,22 @@ while(1):
     
    # ret, image = cap.read()
     image = cv2.imread(img_path)
-
+    offset_text = 0 #puttext location
+    put_txt_loc_cnt = 0 # puttext2 location offset.
     if image is None:
         continue
-    plt.figure(str(counter)+"IMG00")
-    plt.imshow(image)
+    display_image0 = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    plt.figure(str(counter)+"IMG00 ORIGIN")
+    plt.imshow(display_image0)
     plt.show()
     camera_matrix = np.asarray(labeling_info["calib"]["cam01"]["cam_intrinsic"], dtype=np.float32)
     dist_coeff = np.asarray(labeling_info["calib"]["cam01"]["distortion"], dtype=np.float32)
 
     undist_image = cv2.undistort(image, camera_matrix, dist_coeff, None, None)
-    plt.figure(str(counter)+"IMG11")
-    plt.imshow(undist_image)
+    
+    display_image1 = cv2.cvtColor(undist_image, cv2.COLOR_BGR2RGB)
+    plt.figure(str(counter)+"IMG11 undistort")
+    plt.imshow(display_image1)
     plt.show()
     labeling = labeling_info["frames"][0]["annos"]
     class_names = labeling["names"]
@@ -242,13 +245,26 @@ while(1):
         # Normalized Image Plane
         y_norm = (ymax - camera_matrix[1][2]) / camera_matrix[1][1]
         print(y_norm)
-        distance = 10 * CAMERA_HEIGHT / y_norm # issue
-        
+        distance = 10 * CAMERA_HEIGHT / y_norm # issue  
+        #D = W*F/P
+        #W : WIDTH,  F: Focal Length  , P: Pixel
+        #https://pyimagesearch.com/2015/01/19/find-distance-camera-objectmarker-using-python-opencv/
         print(int(distance))
-        cv2.rectangle(undist_image, (xmin, ymin), (xmax, ymax), (0, 0, 255), 3)
+        color1 = random.randrange(0,255)
+        color2 = random.randrange(0,255)
+        color3 = random.randrange(0,255)
+        text_color= (color1,color2,color3)
+        cv2.rectangle(image, (xmin, ymin), (xmax, ymax), text_color, 2)
+        x_offset = obj_puttext_loc[put_txt_loc_cnt][0]
+        y_offset = obj_puttext_loc[put_txt_loc_cnt][1]
 
-        cv2.putText(undist_image, f"{index}-{class_name}-{int(distance)}", (xmin, ymin+25), 1, 2, (255, 255, 0), 2)
 
+        cv2.putText(image, f"{index}-{class_name}-{int(distance)}", (xmin+x_offset, ymin+y_offset), 1, 1, text_color, 2)
+        cv2.putText(image, f"{index}-{class_name}-{int(distance)}", (0, offset_text+25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, 2)
+        offset_text+=15
+        put_txt_loc_cnt+=1
+        if put_txt_loc_cnt == 4:
+            put_txt_loc_cnt = 0
 
         print("==="*50)
 
@@ -260,11 +276,11 @@ while(1):
 
 
         index += 1
-
-    display_image = cv2.cvtColor(undist_image, cv2.COLOR_BGR2RGB)
-    plt.figure(str(counter)+"IMG")
-    plt.imshow(display_image)
+    
+    
+    display_image_rt = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) #distorimg
+    plt.figure(str(counter)+"  RESULT IMG")
+    plt.imshow(display_image_rt)
     plt.show()
-
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
