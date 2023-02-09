@@ -9,8 +9,19 @@ dict 이용해서 txt파일, img파일들을 읽어 해당 위치의 탁구공 �
 ##2.
 왜곡을 방지하기 위해 만든 undist_image 가 원본 이미지에서 crop이 되어, 탁구공이 FOV에서 벗어나는 문제
 
+정상 (sample)
+
+![image](https://user-images.githubusercontent.com/76178551/217925583-cb795fe2-b5bf-4501-b4db-a0db683ba7af.png)
+
+![image](https://user-images.githubusercontent.com/76178551/217925695-5745090e-8278-49f2-9d74-b42e52db8acc.png)
 
 
+비정상 (sample)
+
+![image](https://user-images.githubusercontent.com/76178551/217925742-15522c05-1ce0-4ed1-b099-27c108b08ba7.png)
+
+
+![image](https://user-images.githubusercontent.com/76178551/217925777-34383f11-c7c3-4bd3-bb5c-3d11a9974770.png)
 
 
 # Xycar Pingpong Ball Detection
