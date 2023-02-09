@@ -17,7 +17,7 @@ def get_transformations(cfg_param = None, is_train = None, augmenter:iaa.meta.Au
         # data_transform = tf.Compose([AbsoluteLabels(),
         #                              DefaultAug(),
         #                              RelativeLabels(),
-        #                              ResizeImage(new_size=(cfg_param['width'], cfg_param['height'])),
+        #                              ResizeImage(new_size=(cfg_param['in_width'], cfg_param['in_height'])),
         #                              ToTensor(),
         #                              ])
 
@@ -26,7 +26,7 @@ def get_transformations(cfg_param = None, is_train = None, augmenter:iaa.meta.Au
         if augmenter is None:
             compose_list.append(DefaultAug())
         else:
-            compose_list.append(AugProxy(augmenter=augmenter, kwargs=kwargs))
+            compose_list.append(AugProxy(augmenter=augmenter,kwargs=kwargs))
 
         compose_list += [RelativeLabels(),
                         ResizeImage(new_size=(cfg_param['in_width'], cfg_param['in_height'])),
@@ -70,6 +70,7 @@ class ToTensor(object):
         elif self.is_debug == True:
             image = torch.tensor(np.array(image, dtype=float),dtype=torch.float32)
         labels = torch.FloatTensor(np.array(labels))
+
         return image, labels
 
 class KeepAspect(object):
@@ -104,7 +105,6 @@ class KeepAspect(object):
         label[:, 1] = ((y1 + y2) / 2) / padded_h
         label[:, 2] *= w / padded_w
         label[:, 3] *= h / padded_h
-
         return image_new, label
 
 class ResizeImage(object):
@@ -162,7 +162,8 @@ class ImgAug(object):
     def __call__(self, data):
         # Unpack data
         img, boxes = data
-
+        print('!!! 000')
+        print(boxes)
         # Convert xywh to xyxy
         boxes = np.array(boxes)
         boxes[:, 1:] = xywh2xyxy_np(boxes[:, 1:])
@@ -171,7 +172,8 @@ class ImgAug(object):
         bounding_boxes = BoundingBoxesOnImage(
             [BoundingBox(*box[1:], label=box[0]) for box in boxes],
             shape=img.shape)
-
+        print('!!! 111')
+        print(bounding_boxes)
         if len(bounding_boxes) != 0:
             origin_box = bounding_boxes[0]
 
@@ -179,6 +181,8 @@ class ImgAug(object):
         img, bounding_boxes = self.augmentations(
             image=img,
             bounding_boxes=bounding_boxes)
+        print('!!! 222')
+        print(bounding_boxes)
 
         if len(self.augmentations.find_augmenters_by_name('fliplr_tstl')) != 0 and len(bounding_boxes) != 0:
             augmented_box = bounding_boxes[0]
@@ -197,7 +201,8 @@ class ImgAug(object):
         # Clip out of image boxes
         bounding_boxes = bounding_boxes.remove_out_of_image_fraction(0.4)
         bounding_boxes = bounding_boxes.clip_out_of_image()
-
+        print('!!! 333')
+        print(bounding_boxes)
         # Convert bounding boxes back to numpy
         boxes = np.zeros((len(bounding_boxes), 5), dtype=np.float64)
         for box_idx, box in enumerate(bounding_boxes):
@@ -213,11 +218,12 @@ class ImgAug(object):
             boxes[box_idx, 2] = ((y1 + y2) / 2)
             boxes[box_idx, 3] = (x2 - x1)
             boxes[box_idx, 4] = (y2 - y1)
-
+        print('!!! 444')
+        print(boxes)
         return img, boxes
 
 class DefaultAug(ImgAug):
-    def __init__(self, ):
+    def __init__(self):
         self.augmentations = iaa.Sequential([
             iaa.Sharpen((0.0, 0.1)),
             iaa.Affine(rotate=(-0, 0), translate_percent=(-0.1, 0.1), scale=(1.0, 2.0)),
@@ -227,10 +233,9 @@ class DefaultAug(ImgAug):
 
 class AugProxy(ImgAug):
     def __init__(self, augmenter, **kwargs) -> None:
-        self.augmentations = iaa.Sequential([
+        super().__init__(iaa.Sequential([
             augmenter(**kwargs['kwargs'])
-        ])
-
+        ]))
 
 #flip augmentation for tstl dataset
 #if flip occured, change label of the box between "left sign" and "right sign"

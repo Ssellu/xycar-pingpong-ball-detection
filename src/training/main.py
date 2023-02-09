@@ -71,8 +71,8 @@ def collate_fn(batch):
 
 def train(cfg_param = None, using_gpus = None):
     #Train dataloader
-    train_data = aug_dataset(cfg_param=cfg_param)
-
+    train_data = Yolodata(is_train = True,
+                         cfg_param = cfg_param)
     train_loader = DataLoader(train_data,
                               batch_size=cfg_param['batch'],
                               num_workers=0,
