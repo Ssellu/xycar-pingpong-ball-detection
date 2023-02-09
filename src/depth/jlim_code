@@ -1,0 +1,270 @@
+# -*- coding: utf-8 -*-
+
+import cv2
+from cv2 import undistort
+import matplotlib.pyplot as plt
+import os
+import numpy as np
+import time
+
+#이미지 따로 읽고
+# txt파일을 dict에 저장하기 ( labeling 정보 )
+
+
+
+
+#image_file_path = os.path.join(r", "123.png")
+window_name = "Perception"
+#cap = cv2.VideoCapture(0)
+
+labeling_info ={
+    "meta_info": {
+        "image_size": [
+            640, 480
+        ],
+        "point_feature_num": 4
+    },
+    "calib": {
+        "cam01": {
+            "cam_to_velo": [
+                [
+                   0, 0, 0, 0
+                ],
+                [
+                   0, 0, 0, 0
+                ],
+                [
+                   0, 0, 0, 0 
+                ],
+                [
+                   0, 0, 0, 0
+                ]
+            ],
+            "cam_intrinsic": [
+                [
+                    347.567801, 0.000000, 301.550537
+                ],
+                [
+                    0.000000, 348.434600, 247.157993
+                ],
+                [
+                    0.000000, 0.000000, 1.000000
+                ]
+            ],
+            "distortion": [
+                 -0.297876, 0.065327, -0.001340, -0.000315, 0.000000
+            ]
+        }
+    },
+    "frames": [
+        {
+            "annos": {
+                "names": [
+                   "pingpong",
+                   "pingpong",
+                   "pingpong",
+                   "pingpong",
+                   "pingpong",
+                   "pingpong",
+                   "pingpong",
+                   "pingpong",
+                   "pingpong",
+                   "pingpong"
+                ],
+                "boxes_2d": {
+                    "cam01": [
+                        [
+                            -1.0,
+                            -1.0,
+                            -1.0,
+                            -1.0
+                        ],
+                        [
+                            -1.0,
+                            -1.0,
+                            -1.0,
+                            -1.0
+                        ],
+                        [
+                            -1.0,
+                            -1.0,
+                            -1.0,
+                            -1.0
+                        ],
+                        [
+                            -1.0,
+                            -1.0,
+                            -1.0,
+                            -1.0
+                        ],
+                        [
+                            -1.0,
+                            -1.0,
+                            -1.0,
+                            -1.0
+                        ],
+                        [
+                            -1.0,
+                            -1.0,
+                            -1.0,
+                            -1.0
+                        ],
+                        [
+                            -1.0,
+                            -1.0,
+                            -1.0,
+                            -1.0
+                        ],
+                        [
+                            -1.0,
+                            -1.0,
+                            -1.0,
+                            -1.0
+                        ],
+                        [
+                            -1.0,
+                            -1.0,
+                            -1.0,
+                            -1.0
+                        ],
+                        [
+                            -1.0,
+                            -1.0,
+                            -1.0,
+                            -1.0
+                        ]
+                    ]
+                }
+            },
+            "pose": [
+                0,0,0,0,0,0,0
+            ]
+        }
+    ]
+}
+
+def update_labeling_info(label_file):
+    global labeling_info
+    img_size = labeling_info["meta_info"]["image_size"]
+    width = img_size[0]
+    height = img_size[1]
+    labeling = labeling_info["frames"][0]["annos"]
+    class_names = labeling["names"]
+    boxes_2d = labeling["boxes_2d"]["cam01"]
+
+    with open(label_file, 'r', encoding='utf-8') as f:
+        label_info = f.readlines()
+    
+    idx = 0
+    for obj in label_info: # obj : class, x, y, w, h
+        # obj str -> double 64 type (list)
+        obj = obj.replace("\n","")
+        lst_obj = obj.split(" ")
+        # label_info was normalization x/width , y/ height   so central is each multiply width, height
+        #아래에서 min , max 자체가 x와 y min,max이기에 중앙좌표가 아닌 x1,y1,x2,y2 를 넣어야함.
+        bbd_central_x = float(lst_obj[1]) * width
+        bbd_central_y = float(lst_obj[2]) * height
+        bbd_width = float(lst_obj[3])  * width
+        bbd_height =  float(lst_obj[4])  * height
+        boxes_2d[idx][0] = bbd_central_x - bbd_width/2 # min_x
+        boxes_2d[idx][1] = bbd_central_y - bbd_height/2 #min_y
+        boxes_2d[idx][2] = bbd_central_x + bbd_width/2 #max_x
+        boxes_2d[idx][3] = bbd_central_y + bbd_height/2 # max_y
+     
+        idx+=1
+    #print(label_info[0], label_info[1], label_info[2], label_info[3])
+    return boxes_2d
+    
+
+    #   open file
+    #   assign inform
+
+    for label in label_file:
+        print(label)
+
+counter = 0
+#cap = cv2.VideoCapture(0)
+
+cnt = 80
+
+while(1):
+    counter = '{0:04d}'.format(cnt)
+    img_path = os.path.join(r"C:\Users\asd57\code_space\Perception\Practice3\output71_140", counter+".jpg")
+    label_info_path = os.path.join(r"C:\Users\asd57\code_space\Perception\Practice3\label71_140", counter+".txt")
+    
+   # ret, image = cap.read()
+    image = cv2.imread(img_path)
+
+    if image is None:
+        continue
+    plt.figure(str(counter)+"IMG00")
+    plt.imshow(image)
+    plt.show()
+    camera_matrix = np.asarray(labeling_info["calib"]["cam01"]["cam_intrinsic"], dtype=np.float32)
+    dist_coeff = np.asarray(labeling_info["calib"]["cam01"]["distortion"], dtype=np.float32)
+
+    undist_image = cv2.undistort(image, camera_matrix, dist_coeff, None, None)
+    plt.figure(str(counter)+"IMG11")
+    plt.imshow(undist_image)
+    plt.show()
+    labeling = labeling_info["frames"][0]["annos"]
+    class_names = labeling["names"]
+    boxes_2d = labeling["boxes_2d"]["cam01"]
+    boxes_2d = update_labeling_info(label_info_path)
+    # if cnt == 112 or cnt == 113:
+    #     print(cnt)
+    #     print(boxes_2d)
+    #     if cnt == 113: break
+
+    cnt +=1
+   
+
+    CAMERA_HEIGHT = 0.145
+
+    # distance = f * height / img(y)
+    # 종/횡 방향으로 분리된 거리가 아닌, 직선거리
+    # FOV 정보를 알면 -> 종/횡 분리가 가능하다.
+
+    index = 0
+    for class_name, bbox in zip(class_names, boxes_2d):
+        xmin, ymin, xmax, ymax = bbox
+        xmin = int(xmin)
+        ymin = int(ymin)
+        xmax = int(xmax)
+        ymax = int(ymax)
+        if xmin < 0 or ymin < 0 or xmax < 0 or ymax < 0:
+            continue
+
+
+        width = xmax - xmin
+        height = ymax - ymin
+
+        # Normalized Image Plane
+        y_norm = (ymax - camera_matrix[1][2]) / camera_matrix[1][1]
+        print(y_norm)
+        distance = 10 * CAMERA_HEIGHT / y_norm # issue
+        
+        print(int(distance))
+        cv2.rectangle(undist_image, (xmin, ymin), (xmax, ymax), (0, 0, 255), 3)
+
+        cv2.putText(undist_image, f"{index}-{class_name}-{int(distance)}", (xmin, ymin+25), 1, 2, (255, 255, 0), 2)
+
+
+        print("==="*50)
+
+        #initialize  defense mutex
+        boxes_2d[index][0] = -1
+        boxes_2d[index][1] = -1
+        boxes_2d[index][2] = -1
+        boxes_2d[index][3] = -1
+
+
+        index += 1
+
+    display_image = cv2.cvtColor(undist_image, cv2.COLOR_BGR2RGB)
+    plt.figure(str(counter)+"IMG")
+    plt.imshow(display_image)
+    plt.show()
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
