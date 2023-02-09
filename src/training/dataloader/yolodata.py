@@ -33,6 +33,8 @@ class Yolodata(Dataset):
         self.total_data = []
         self.cfg_param = cfg_param
 
+        self.transforms = self._get_bunch_transforms(self.cfg_param)
+
         if self.is_train:
             self.file_dir = self.train_dir+"/JPEGImages/"
             self.file_txt = self.train_dir+"/ImageSets/"+self.train_txt
@@ -62,7 +64,6 @@ class Yolodata(Dataset):
             self.total_data = [(orig_img, orig_bbox)]
             if is_train:
                 self._append_aug_img(orig_img, orig_bbox)
-            # self._append_aug_img(orig_img, orig_bbox)
         random.shuffle(self.total_data)
 
 
@@ -100,9 +101,6 @@ class Yolodata(Dataset):
 
         #Change gt_box type
         bbox = np.array(bbox)
-        print('==' * 30)
-        print(bbox)
-        print('==' * 30)
         #skip empty target
         if bbox.shape[0] == 0:
             return
@@ -110,37 +108,11 @@ class Yolodata(Dataset):
         return img, bbox
 
     def _append_aug_img(self, orig_img, orig_bbox):
-        #data augmentation
-        tranforms = self._get_bunch_transforms()
-        # tranforms = [self.transform]
 
-        for transform in tranforms:
+        for transform in self.transforms:
             print(f'!!!origgg : {orig_bbox}')
             img, bbox = transform((orig_img, torch.tensor(orig_bbox)))
 
-            #############################
-            # Image Load
-            image = img.permute(1, 2, 0).numpy().copy() #.astype(np.int8)
-            image_width = image.shape[1]
-            image_height = image.shape[0]
-
-            print(f'image_width :{image_width}')
-            print(f'image_height :{image_height}')
-            print(f'bbox : {bbox}')
-            for norms in bbox:
-                x = norms[1]
-                y = norms[2]
-                w = norms[3]
-                h = norms[4]
-
-                # Draw Rectangles
-                print(f'shape : {image.shape}')
-                image = cv2.rectangle(image, (int((x - w/2) * image_width), int((y - h/2) * image_height)), (int((x + w/2) * image_width), int((y + h/2) * image_height)),
-                                   (random.randrange(256), random.randrange(256), random.randrange(256)), 1)
-            cv2.imshow('test', image)
-            cv2.waitKey(0)
-
-            #############################
             if bbox.shape[0] != 0:
                 batch_idx = torch.zeros(bbox.shape[0])
                 #batch_idx, cls, x, y, w, h
@@ -148,8 +120,8 @@ class Yolodata(Dataset):
                 self.total_data.append((img, target_data))
 
 
-    def _get_bunch_transforms(self):
-        cfg_param = self.cfg_param
+    def _get_bunch_transforms(self, cfg):
+        cfg_param = cfg
         transforms = [transform for transform in
                     [get_transformations(cfg_param=cfg_param, is_train=True)]
                     + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.Add, value=value) for value in [25, 45, -25, 45]]
@@ -167,10 +139,35 @@ class Yolodata(Dataset):
                     + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.Emboss, alpha=alpha, strength=strength) for alpha,strength in zip([1, 1, 1], [0.2, 0.3, 0.4])]
                     + [get_transformations(cfg_param=cfg_param, is_train=True, augmenter=iaa.CropAndPad, px=px) for px in [(-2,0,0,0), (0,2,0,-2), (2,0,0,0), (0,-2,0,2)]]
         ]
-        print(f'trans : {transforms}')
         return transforms
 
     def __getitem__(self, index):
+
+
+        #############################
+        # Image Load
+        img, bbox = self.total_data[index]
+        image = img.permute(1, 2, 0).numpy().copy() #.astype(np.int8)
+        image_width = image.shape[1]
+        image_height = image.shape[0]
+
+        print(f'image_width :{image_width}')
+        print(f'image_height :{image_height}')
+        print(f'bbox : {bbox}')
+        for norms in bbox:
+            x = norms[1]
+            y = norms[2]
+            w = norms[3]
+            h = norms[4]
+
+            # Draw Rectangles
+            print(f'shape : {image.shape}')
+            image = cv2.rectangle(image, (int((x - w/2) * image_width), int((y - h/2) * image_height)), (int((x + w/2) * image_width), int((y + h/2) * image_height)),
+                                (random.randrange(256), random.randrange(256), random.randrange(256)), 1)
+        cv2.imshow('test', image)
+        cv2.waitKey(0)
+
+        #############################
         return self.total_data[index]
 
 

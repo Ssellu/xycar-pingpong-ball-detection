@@ -162,8 +162,7 @@ class ImgAug(object):
     def __call__(self, data):
         # Unpack data
         img, boxes = data
-        print('!!! 000')
-        print(boxes)
+
         # Convert xywh to xyxy
         boxes = np.array(boxes)
         boxes[:, 1:] = xywh2xyxy_np(boxes[:, 1:])
@@ -172,8 +171,6 @@ class ImgAug(object):
         bounding_boxes = BoundingBoxesOnImage(
             [BoundingBox(*box[1:], label=box[0]) for box in boxes],
             shape=img.shape)
-        print('!!! 111')
-        print(bounding_boxes)
         if len(bounding_boxes) != 0:
             origin_box = bounding_boxes[0]
 
@@ -181,8 +178,6 @@ class ImgAug(object):
         img, bounding_boxes = self.augmentations(
             image=img,
             bounding_boxes=bounding_boxes)
-        print('!!! 222')
-        print(bounding_boxes)
 
         if len(self.augmentations.find_augmenters_by_name('fliplr_tstl')) != 0 and len(bounding_boxes) != 0:
             augmented_box = bounding_boxes[0]
@@ -201,8 +196,7 @@ class ImgAug(object):
         # Clip out of image boxes
         bounding_boxes = bounding_boxes.remove_out_of_image_fraction(0.4)
         bounding_boxes = bounding_boxes.clip_out_of_image()
-        print('!!! 333')
-        print(bounding_boxes)
+
         # Convert bounding boxes back to numpy
         boxes = np.zeros((len(bounding_boxes), 5), dtype=np.float64)
         for box_idx, box in enumerate(bounding_boxes):
@@ -218,8 +212,7 @@ class ImgAug(object):
             boxes[box_idx, 2] = ((y1 + y2) / 2)
             boxes[box_idx, 3] = (x2 - x1)
             boxes[box_idx, 4] = (y2 - y1)
-        print('!!! 444')
-        print(boxes)
+
         return img, boxes
 
 class DefaultAug(ImgAug):
