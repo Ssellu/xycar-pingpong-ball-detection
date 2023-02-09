@@ -14,6 +14,7 @@ def show_bbox(directory: str):
         image = cv2.imread(image_path, cv2.IMREAD_COLOR)
         image_width = image.shape[1]
         image_height = image.shape[0]
+
         # Annotation Load
         # Format : <object-class> <x center> <y center> <width> <height>
         with open(annotation, 'r') as f:
